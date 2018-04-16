@@ -21,7 +21,7 @@ let gitWikiPath = 'ccxt.wiki'
 if (!fs.existsSync (gitWikiPath)) {
 
     log.bright.cyan ('Checking out ccxt.wiki...')
-    execSync ('git clone https://github.com/kroitor/ccxt.wiki.git')
+    execSync ('git clone https://github.com/ccxt/ccxt.wiki.git')
 }
 
 // ---------------------------------------------------------------------------
@@ -79,7 +79,7 @@ try {
             replacement: "exchanges = [\n" + "    '" + ids.join ("',\n    '") + "'," + "\n]",
         },
         {
-            file: './php/base/Exchange.php',
+            file: './php/Exchange.php',
             regex: /public static \$exchanges \= array \([^\)]+\)/,
             replacement: "public static $exchanges = array (\n        '" + ids.join ("',\n        '") + "',\n    )",
         },

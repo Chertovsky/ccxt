@@ -8,15 +8,15 @@ The easiest way to install the ccxt library is to use builtin package managers:
 
 This library is shipped as an all-in-one module implementation with minimalistic dependencies and requirements:
 
--  ```ccxt.js`` <https://github.com/kroitor/ccxt/blob/master/ccxt.js>`__ in JavaScript
--  ```./python/`` <https://github.com/kroitor/ccxt/blob/master/python/>`__ in Python (generated from JS)
--  ```ccxt.php`` <https://github.com/kroitor/ccxt/blob/master/ccxt.php>`__ in PHP (generated from JS)
+-  ```ccxt.js`` <https://github.com/ccxt/ccxt/blob/master/ccxt.js>`__ in JavaScript
+-  ```./python/`` <https://github.com/ccxt/ccxt/blob/master/python/>`__ in Python (generated from JS)
+-  ```ccxt.php`` <https://github.com/ccxt/ccxt/blob/master/ccxt.php>`__ in PHP (generated from JS)
 
-You can also clone it into your project directory from `ccxt GitHub repository <https://github.com/kroitor/ccxt>`__:
+You can also clone it into your project directory from `ccxt GitHub repository <https://github.com/ccxt/ccxt>`__:
 
 .. code:: shell
 
-    git clone https://github.com/kroitor/ccxt.git
+    git clone https://github.com/ccxt/ccxt.git
 
 An alternative way of installing this library into your code is to copy a single file manually into your working directory with language extension appropriate for your environment.
 
@@ -66,7 +66,7 @@ Python
     import ccxt
     print(ccxt.exchanges) # print a list of all available exchange classes
 
-The library supports concurrent asynchronous mode with asyncio and async/await in Python 3.5+
+The library supports concurrent asynchronous mode with asyncio and async/await in Python 3.5.3+
 
 .. code:: python
 
@@ -77,7 +77,7 @@ PHP
 
 The autoloadable version of ccxt can be installed with `**Packagist/Composer** <https://packagist.org/packages/ccxt/ccxt>`__ (PHP 5.3+).
 
-It can also be installed from the source code: `**``ccxt.php``** <https://raw.githubusercontent.com/kroitor/ccxt/master/php>`__
+It can also be installed from the source code: `**``ccxt.php``** <https://raw.githubusercontent.com/ccxt/ccxt/master/php>`__
 
 It requires common PHP modules:
 
@@ -94,7 +94,7 @@ It requires common PHP modules:
 Proxy
 -----
 
-In some specific cases you may want a proxy, if you experience issues with `DDoS protection by Cloudflare <https://github.com/kroitor/ccxt/wiki/Manual#ddos-protection-by-cloudflare>`__ or your network / country / IP is rejected by their filters.
+In some specific cases you may want a proxy, if you experience issues with `DDoS protection by Cloudflare <https://github.com/ccxt/ccxt/wiki/Manual#ddos-protection-by-cloudflare>`__ or your network / country / IP is rejected by their filters.
 
 If you need a proxy, use the ``proxy`` property (a string literal) containing base URL of http(s) proxy. It is for use with web browsers and from blocked locations.
 
@@ -104,6 +104,48 @@ The absolute exchange endpoint URL is appended to ``proxy`` string before HTTP r
 
 -  ``kraken.proxy = 'https://crossorigin.me/'``
 -  ``gdax.proxy   = 'https://cors-anywhere.herokuapp.com/'``
+
+Python Proxies
+~~~~~~~~~~~~~~
+
+The python version of the library uses the `python-requests <python-requests.org>`__ package for underlying HTTP and supports all means of customization available in the ``requests`` package, including proxies.
+
+You can configure proxies by setting the environment variables HTTP\_PROXY and HTTPS\_PROXY.
+
+.. code:: shell
+
+    $ export HTTP_PROXY="http://10.10.1.10:3128"
+    $ export HTTPS_PROXY="http://10.10.1.10:1080"
+
+After exporting the above variables with your proxy settings, all reqeusts from within ccxt will be routed through those proxies.
+
+You can also set them programmatically:
+
+.. code:: python
+
+    import ccxt
+    exchange = ccxt.poloniex({
+        'proxies': {
+            'http': 'http://10.10.1.10:3128',
+            'https': 'http://10.10.1.10:1080',
+        },
+    })
+
+Or
+
+.. code:: python
+
+    import ccxt
+    exchange = ccxt.poloniex()
+    exchange.proxies = {
+      'http': 'http://10.10.1.10:3128',
+      'https': 'http://10.10.1.10:1080',
+    }
+
+A more detailed documentation on using proxies with the sync python version of the ccxt library can be found here:
+
+-  `Proxies <http://docs.python-requests.org/en/master/user/advanced/#proxies>`__
+-  `SOCKS <http://docs.python-requests.org/en/master/user/advanced/#socks>`__
 
 CORS (Access-Control-Allow-Origin)
 ----------------------------------
