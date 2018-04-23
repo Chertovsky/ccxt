@@ -99,10 +99,10 @@ module.exports = class cryptopia extends Exchange {
             let market = markets[i];
             let id = market['Id'];
             let symbol = market['Label'];
-            let base = market['Symbol'];
-            let quote = market['BaseSymbol'];
-            base = this.commonCurrencyCode (base);
-            quote = this.commonCurrencyCode (quote);
+            let baseId = market['Symbol'];
+            let quoteId = market['BaseSymbol'];
+            let base = this.commonCurrencyCode (baseId);
+            let quote = this.commonCurrencyCode (quoteId);
             symbol = base + '/' + quote;
             let precision = {
                 'amount': 8,
@@ -131,6 +131,8 @@ module.exports = class cryptopia extends Exchange {
                 'symbol': symbol,
                 'base': base,
                 'quote': quote,
+                'baseId': baseId,
+                'quoteId': quoteId,
                 'info': market,
                 'maker': market['TradeFee'] / 100,
                 'taker': market['TradeFee'] / 100,
@@ -441,6 +443,7 @@ module.exports = class cryptopia extends Exchange {
             'id': id,
             'timestamp': timestamp,
             'datetime': this.iso8601 (timestamp),
+            'lastTradeTimestamp': undefined,
             'status': 'open',
             'symbol': symbol,
             'type': type,
@@ -501,6 +504,7 @@ module.exports = class cryptopia extends Exchange {
             'info': this.omit (order, 'status'),
             'timestamp': timestamp,
             'datetime': this.iso8601 (timestamp),
+            'lastTradeTimestamp': undefined,
             'status': order['status'],
             'symbol': symbol,
             'type': 'limit',
