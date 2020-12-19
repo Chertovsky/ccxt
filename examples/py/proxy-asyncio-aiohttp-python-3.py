@@ -9,10 +9,10 @@ from pprint import pprint
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(root + '/python')
 
-import ccxt.async as ccxt  # noqa: E402
+import ccxt.async_support as ccxt  # noqa: E402
 
 
-async def test_gdax():
+async def test():
 
     exchange = ccxt.poloniex({
         #
@@ -46,4 +46,4 @@ async def test_gdax():
     return ticker
 
 if __name__ == '__main__':
-    pprint(asyncio.get_event_loop().run_until_complete(test_gdax()))
+    pprint(asyncio.get_event_loop().run_until_complete(test()))

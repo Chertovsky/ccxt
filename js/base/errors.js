@@ -1,44 +1,12 @@
 'use strict';
 
-/*  ------------------------------------------------------------------------ */
-
-module.exports = subclass (
-
-/*  Root class                  */
-
-    Error,
-
-/*  Derived class hierarchy     */
-
-    { 'BaseError':
-        { 'ExchangeError':
-            { 'NotSupported':               {}
-            , 'AuthenticationError':
-                { 'PermissionDenied':       {}
-                }
-            , 'InsufficientFunds':          {}
-            , 'InvalidAddress':             {}
-            , 'InvalidOrder':
-                { 'OrderNotFound':          {}
-                , 'OrderNotCached':         {}
-                , 'CancelPending':          {}
-                }
-            }
-        , 'NetworkError':
-            { 'DDoSProtection':         {}
-            , 'RequestTimeout':         {}
-            , 'ExchangeNotAvailable':   {}
-            , 'InvalidNonce':           {}
-            }
-        }
-    }
-)
+const errorHierarchy = require ('./errorHierarchy.js')
 
 /*  ------------------------------------------------------------------------ */
 
 function subclass (BaseClass, classes, namespace = {}) {
 
-    for (const [$class, subclasses] of Object.entries (classes)) {
+    for (const [className, subclasses] of Object.entries (classes)) {
 
         const Class = Object.assign (namespace, {
 
@@ -47,7 +15,7 @@ function subclass (BaseClass, classes, namespace = {}) {
             the super-useful `e.constructor.name` magic wouldn't work — we then would have no chance to
             obtain a error type string from an error instance programmatically!                               */
 
-            [$class]: class extends BaseClass {
+            [className]: class extends BaseClass {
 
                 constructor (message) {
 
@@ -60,11 +28,12 @@ function subclass (BaseClass, classes, namespace = {}) {
 
                     this.constructor = Class
                     this.__proto__   = Class.prototype
+                    this.name        = className
                     this.message     = message
                 }
             }
 
-        })[$class]
+        })[className]
 
         subclass (Class, subclasses, namespace)
     }
@@ -73,3 +42,10 @@ function subclass (BaseClass, classes, namespace = {}) {
 }
 
 /*  ------------------------------------------------------------------------ */
+
+module.exports = subclass (
+    // Root class
+    Error,
+    // Derived class hierarchy
+    errorHierarchy
+)

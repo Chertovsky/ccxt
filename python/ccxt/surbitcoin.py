@@ -6,13 +6,13 @@
 from ccxt.foxbit import foxbit
 
 
-class surbitcoin (foxbit):
+class surbitcoin(foxbit):
 
     def describe(self):
         return self.deep_extend(super(surbitcoin, self).describe(), {
             'id': 'surbitcoin',
             'name': 'SurBitcoin',
-            'countries': 'VE',
+            'countries': ['VE'],
             'has': {
                 'CORS': False,
             },

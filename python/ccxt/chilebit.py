@@ -6,13 +6,13 @@
 from ccxt.foxbit import foxbit
 
 
-class chilebit (foxbit):
+class chilebit(foxbit):
 
     def describe(self):
         return self.deep_extend(super(chilebit, self).describe(), {
             'id': 'chilebit',
             'name': 'ChileBit',
-            'countries': 'CL',
+            'countries': ['CL'],
             'has': {
                 'CORS': False,
             },

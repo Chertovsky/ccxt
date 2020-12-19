@@ -6,13 +6,13 @@
 from ccxt.foxbit import foxbit
 
 
-class vbtc (foxbit):
+class vbtc(foxbit):
 
     def describe(self):
         return self.deep_extend(super(vbtc, self).describe(), {
             'id': 'vbtc',
             'name': 'VBTC',
-            'countries': 'VN',
+            'countries': ['VN'],
             'has': {
                 'CORS': False,
             },
