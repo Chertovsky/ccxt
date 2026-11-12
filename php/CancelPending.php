@@ -2,6 +2,6 @@
 
 namespace ccxt;
 
-class CancelPending extends InvalidOrder {
+require_once PATH_TO_CCXT . 'OperationFailed.php';
 
-}
+class CancelPending extends OperationFailed {};

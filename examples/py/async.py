@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import asyncio
+from importlib import import_module
+from importlib.util import find_spec
+
+run = import_module(next(filter(find_spec, ('uvloop', 'winloop', 'asyncio')))).run
 import functools
 import os
 import sys
@@ -8,27 +12,27 @@ import sys
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(root + '/python')
 
-import ccxt.async as ccxt  # noqa: E402
+import ccxt.async_support as ccxt  # noqa: E402
 
 
 async def print_ticker(symbol, id):
     # verbose mode will show the order of execution to verify concurrency
     exchange = getattr(ccxt, id)({'verbose': True})
     print(await exchange.fetch_ticker(symbol))
+    await exchange.close()
 
 
-if __name__ == '__main__':
-
+async def main():
     symbol = 'ETH/BTC'
     print_ethbtc_ticker = functools.partial(print_ticker, symbol)
-    [asyncio.ensure_future(print_ethbtc_ticker(id)) for id in [
+    await asyncio.gather(*[print_ethbtc_ticker(id) for id in [
         'bitfinex',
         'poloniex',
         'kraken',
-        'gdax',
-        'bittrex',
+        'kucoin',
         'hitbtc',
-    ]]
-    pending = asyncio.Task.all_tasks()
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(asyncio.gather(*pending))
+    ]])
+
+
+if __name__ == '__main__':
+    run(main())

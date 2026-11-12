@@ -12,11 +12,10 @@ import ccxt  # noqa: E402
 exchange = ccxt.bitmex({
     'apiKey': 'YOUR_API_KEY',
     'secret': 'YOUR_SECRET',
-    'enableRateLimit': True,
 })
 
-symbol = 'XBTM18'  # bitcoin contract according to bitmex futures coding
-type = 'StopLimit'  # or 'market', or 'Stop' or 'StopLimit'
+symbol = 'BTC/USD:BTC-220624'  # bitcoin contract according to https://github.com/ccxt/ccxt/wiki/Manual#symbols-and-market-ids
+type = 'StopLimit'  # or 'Market', or 'Stop' or 'StopLimit'
 side = 'sell'  # or 'buy'
 amount = 1.0
 price = 6500.0  # or None

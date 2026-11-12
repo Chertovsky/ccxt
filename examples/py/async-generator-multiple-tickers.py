@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import asyncio
-import ccxt.async as ccxt
+from importlib import import_module
+from importlib.util import find_spec
+
+run = import_module(next(filter(find_spec, ('uvloop', 'winloop', 'asyncio')))).run
+import ccxt.async_support as ccxt
 
 
 async def poll(tickers):
@@ -19,4 +23,4 @@ async def main():
         print(symbol, ticker)
 
 
-asyncio.get_event_loop().run_until_complete(main())
+run(main())

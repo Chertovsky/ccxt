@@ -1,85 +1,214 @@
 <?php
 
-$root = dirname (dirname (dirname (__FILE__)));
+error_reporting(E_ALL);
+date_default_timezone_set('UTC');
 
-include $root . '/ccxt.php';
 
-date_default_timezone_set ('UTC');
+$root = dirname(dirname(dirname(__FILE__)));
+include $root . '/ccxt.php';;
 
-if (count ($argv) > 2) {
 
-    $id = $argv[1];
-    $member = $argv[2];
-    $args = array_slice ($argv, 3);
-    $verbose = count (array_filter ($args, function ($option) { return strstr ($option, '--verbose') !== false; })) > 0;
-    $args = array_filter ($args, function ($option) { return strstr ($option, '--verbose') === false; });
-    $args = array_map (function ($arg) {
-        return ($arg[0] === '{' || $arg[0] === '[') ? json_decode ($arg) :
-            (preg_match ('/[a-zA-Z]/', $arg) ? $arg : floatval ($arg));
-    }, $args);
+use React\Async;
 
-    $exchange_found = in_array ($id, \ccxt\Exchange::$exchanges);
+date_default_timezone_set('UTC');
 
-    if ($exchange_found) {
+echo 'PHP v' . PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION . '.' . PHP_RELEASE_VERSION . "\n";
+echo 'CCXT version :' . \ccxt\async\Exchange::VERSION . "\n";
 
-        $keys_global = './keys.json';
-        $keys_local = './keys.local.json';
-        $keys_file = file_exists ($keys_local) ? $keys_local : $keys_global;
 
-        $config = json_decode (file_get_contents ($keys_file), true);
+$main = function() use ($argv) {
+    if (count($argv) > 2) {
+        # first we filter the args
+        $verbose = count(array_filter($argv, function ($option) { return strstr($option, '--verbose') !== false; })) > 0;
+        $args = array_values(array_filter($argv, function ($option) { return strstr($option, '--verbose') === false; }));
 
-        echo print_r ($keys_file, true) . "\n";
-        // echo print_r ($config[$id]) . "\n";
+        $demo = count(array_filter($argv, function ($option) { return strstr($option, '--demo') !== false; })) > 0;
+        $args = array_values(array_filter($argv, function ($option) { return strstr($option, '--demo') === false; }));
 
-        $config = array_merge ($config[$id], array (
-            'verbose' => $verbose, // set to true for debugging
-        ));
+        $test = count(array_filter($args, function ($option) { return strstr($option, '--test') !== false || strstr($option, '--testnet') !== false || strstr($option, '--sandbox') !== false; })) > 0;
+        $args = array_values(array_filter($args, function ($option) { return strstr($option, '--test') === false && strstr($option, '--testnet') === false && strstr($option, '--sandbox') === false; }));
 
-        // instantiate the exchange by id
-        $exchange = '\\ccxt\\' . $id;
-        $exchange = new $exchange ($config);
+        $debug = count(array_filter($args, function ($option) { return strstr($option, '--debug') !== false; })) > 0;
+        $args = array_values(array_filter($args, function ($option) { return strstr($option, '--debug') === false; }));
 
-        $exchange->load_markets ();
+        $spot = count(array_filter($args, function ($option) { return strstr($option, '--spot') !== false; })) > 0;
+        $args = array_values(array_filter($args, function ($option) { return strstr($option, '--spot') === false; }));
 
-        if (method_exists ($exchange, $member)) {
 
-            try {
+        $no_keys = count(array_filter($args, function ($option) { return strstr($option, '--no-keys') !== false; })) > 0;
+        $args = array_values(array_filter($args, function ($option) { return strstr($option, '--no-keys') === false; }));
 
-                echo $exchange->id . '->' . $member . ' (' . implode (', ', $args) . ")\n";
+        $swap = count(array_filter($args, function ($option) { return strstr($option, '--swap') !== false; })) > 0;
+        $args = array_values(array_filter($args, function ($option) { return strstr($option, '--swap') === false; }));
 
-                $result = call_user_func_array (array ($exchange, $member), $args);
+        $future = count(array_filter($args, function ($option) { return strstr($option, '--future') !== false; })) > 0;
+        $args = array_values(array_filter($args, function ($option) { return strstr($option, '--future') === false; }));
 
-                print_r ($result);
+        $option = count(array_filter($args, function ($option) { return strstr($option, '--option') !== false; })) > 0;
+        $args = array_values(array_filter($args, function ($option) { return strstr($option, '--option') === false; }));
 
-            } catch (\ccxt\NetworkError $e) {
+        $new_updates = count(array_filter($args, function ($option) { return strstr($option, '--newUpdates') !== false; })) > 0;
+        $args = array_values(array_filter($args, function ($option) { return strstr($option, '--newUpdates') === false; }));
 
-                echo get_class ($e) . ': ' . $e->getMessage () . "\n";
+        $prediction = count(array_filter($args, function ($option) { return strstr($option, '--prediction') !== false; })) > 0;
+        $args = array_values(array_filter($args, function ($option) { return strstr($option, '--prediction') === false; }));
 
-            } catch (\ccxt\ExchangeError $e) {
+        $id = $args[1];
+        $member = $args[2];
+        $args = array_slice($args, 3);
+        // regular ids win for ids present in both namespaces (e.g. hyperliquid); --prediction
+        // forces the prediction namespace, and prediction is the fallback for prediction-only ids
+        $is_prediction = class_exists('\\ccxt\\prediction\\' . $id) && ($prediction || !in_array($id, \ccxt\async\Exchange::$exchanges));
+        $exchange_found = in_array($id, \ccxt\async\Exchange::$exchanges) || $is_prediction;
 
-                echo $e->class . "-\n";
+        if ($exchange_found) {
 
-                echo get_class ($e) . ': ' . $e->getMessage () . "\n";
+            $keys_global = './keys.json';
+            $keys_local = './keys.local.json';
+            $keys_file = file_exists($keys_local) ? $keys_local : $keys_global;
+
+            $config = json_decode(file_get_contents($keys_file), true);
+            $settings = array_key_exists($id, $config) ? $config[$id] : array();
+            $config = array_merge($settings, array(
+                'verbose' => $verbose && $debug, // set to true for debugging
+            ));
+
+            // instantiate the exchange by id
+            $exchange = null;
+            if ($is_prediction) {
+                $exchange = '\\ccxt\\prediction\\' . $id;
+            } else if (in_array($id, \ccxt\pro\Exchange::$exchanges)) {
+                $exchange = '\\ccxt\\pro\\' . $id;
+            } else {
+                $exchange = '\\ccxt\\async\\' . $id;
+            }
+            $exchange = new $exchange($config);
+
+            if ($spot) {
+                $exchange->options['defaultType'] = 'spot';
+            } else if ($swap) {
+                $exchange->options['defaultType'] = 'swap';
+            } else if ($future) {
+                $exchange->options['defaultType'] = 'future';
+            } else if ($option) {
+                $exchange->options['defaultType'] = 'option';
             }
 
-        } else if (property_exists ($exchange, $member)) {
+            if ($new_updates) {
+                $exchange->newUpdates = true;
+            }
 
-            echo print_r ($exchange->$member, true) . "\n";
+            if ($test) {
+                $exchange->set_sandbox_mode(true);
+            } else if ($demo) {
+                $exchange->enable_demo_trading(true);
+            }
 
+            if (!$no_keys) {
+                // check auth keys in env var
+                foreach ($exchange->requiredCredentials as $credential => $is_required) {
+                    if ($is_required && !$exchange->$credential ) {
+                        $credential_var = strtoupper($id . '_' . $credential); // example: KRAKEN_SECRET
+                        $credential_value = getenv($credential_var);
+                        if ($credential_value) {
+                            if (str_contains($credential_value, "---BEGIN")) {
+                                $credential_value = str_replace('\n', "\n", $credential_value);
+                            }
+                            $exchange->$credential = $credential_value;
+                        }
+                    }
+                }
+            }
+
+            $args = array_map(function ($arg) {
+                global $exchange;
+                if ($arg[0] === '{' || $arg[0] === '[')
+                    return json_decode($arg, true);
+                if ($arg === 'NULL' || $arg === 'null')
+                    return null;
+                if (preg_match('/^[+-]?[0-9]+$/', $arg))
+                    return intval ($arg);
+                if (preg_match('/^[.eE0-9+-]+$/', $arg))
+                    return floatval ($arg);
+                if (preg_match('/^[0-9]{4}[-]?[0-9]{2}[-]?[0-9]{2}[T\s]?[0-9]{2}[:]?[0-9]{2}[:]?[0-9]{2}/', $arg))
+                    return $exchange->parse8601($arg);
+                else
+                    return $arg;
+            }, $args);
+
+            $markets_path = '.cache/' . $exchange->id . '-markets.json';
+            if (file_exists($markets_path)) {
+                $markets = json_decode(file_get_contents($markets_path), true);
+                $exchange->markets = $markets;
+            } else {
+                yield $exchange->load_markets();
+            }
+
+            $exchange->verbose = $verbose;
+
+            echo $exchange->id . '->' . $member . '(' . @implode(', ', $args) . ")\n";
+
+            $is_ws_method = false;
+
+            if (mb_strpos($member, 'watch') !== false) {
+                $is_ws_method = true;
+            }
+
+            while (true) {
+
+                try {
+
+                    $result = yield call_user_func_array(array($exchange, $member), $args);
+
+                    echo print_r($result, true) . "\n";
+
+                    if (!$is_ws_method) {
+                        # make sure to exit with exit code zero here
+                        exit(0);
+                    }
+
+                } catch (\ccxt\NetworkError $e) {
+
+                    echo get_class($e) . ': ' . $e->getMessage() . "\n";
+                    exit(1);
+
+                } catch (\ccxt\ExchangeError $e) {
+
+                    echo get_class($e) . ': ' . $e->getMessage() . "\n";
+                    exit(1);
+
+                } catch (Exception $e) {
+
+                    echo get_class($e) . ': ' . $e->getMessage() . "\n";
+
+                    if (property_exists($exchange, $member)) {
+
+                        echo print_r($exchange->$member, true) . "\n";
+
+                    } else {
+
+                        echo $exchange->id . '->' . $member . ": no such property\n";
+                    }
+                    exit(1);
+                }
+            }
         } else {
 
-            echo $exchange->id . '->' . $member . ": no such property\n";
+            echo 'Exchange ' . $id . " not found\n";
+            exit(1);
         }
 
     } else {
-
-        echo 'Exchange ' . $id . " not found\n";
+        print_r('Usage: php -f ' . __FILE__ . " exchange_id member [args...]\n");
+        exit(1);
     }
+};
 
-} else {
-
-    print_r ('Usage: php -f ' . __FILE__ . " exchange_id member [args...]\n");
-
+function teste() {
+    yield 0;
 }
+
+$promise = Async\coroutine($main);
+Async\await($promise);
 
 ?>
